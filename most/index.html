@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.switch-panel-div {
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    position: absolute;
+    right: 30px;
+    bottom: 30px;
+    background-color: #eee;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: solid 1px #000;            
+}
+</style>
+</head>
+<body>
+
+<link rel="stylesheet"
+      href="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.css" />
+
+<script type="text/javascript"
+        src="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.js"></script>
+
+<script type="text/javascript" src="https://rawgithub.com/Melown/vts-browser-js/master/demos/meshes-obj-import/modelObj.js"></script>
+
+<div id="map-div" style="width:100%; height:100%;">
+</div>
+
+<script>
+var browser = null;
+var map = null;
+var renderer = null;
+var houseModel = null;
+var carModel = null;
+
+var visible = false;
+
+(function startDemo() {
+    // create map in the html div with id 'map-div'
+    // parameter 'map' sets path to the map which will be displayed
+    // you can create your own map on melown.com
+    // position parameter is described in documentation 
+    // https://github.com/Melown/vts-browser-js/wiki/VTS-Browser-Map-API#position
+    // view parameter is described in documentation 
+    // https://github.com/Melown/vts-browser-js/wiki/VTS-Browser-Map-API#definition-of-view
+    browser = vts.browser('map-div', {
+        map: "https://cdn.melown.com/mario/store/melown2015/map-config/petvana-gmail-com/Example-Map-Bentky-nad-Jizerou-_-example-_-/mapConfig.json",
+        authorization: "https://cdn.melown.com/mario/auth/fximLmpNVFTFw6yJsf35",
+        //position : [ 'obj', 15.3775623,50.675077, 'float',0.00,-231.22,-25.55,0.00,101.83,45.00 ],
+        minViewExtent: 1 //allow camera little bit closer
+    });
+
+    //check whether browser is supported
+    if (!browser) {
+        console.log('Your web browser does not support WebGL');
+        return;
+    }
+
+    renderer = browser.renderer;
+
+    //create new UI panel
+    //html contetnt is in the form of string
+    //you can style html elements as usual
+    var panel = browser.ui.addControl('switch-panel',
+        '<div class="switch-panel-div">' +
+           '<input id="switch" type="checkbox" checked="true"> Obchvat' +
+           '<p><input id="switch2" type="checkbox"> Obchvat2' +
+           '</div>');
+    
+    //get switch element
+    //do not use document.getElementById,
+    //because element ids are changed to unique ids
+    button = panel.getElement('switch');
+    
+    //create event listener
+    //once button state is changed then
+    //onSwitchView function is called
+    button.on('change', onSwitchView);
+
+    //callback once is map config loaded
+    browser.on('map-loaded', onMapLoaded);
+})();
+
+function onSwitchView() {
+    if (browser.map) { //check whether map is loaded
+        if (button.getElement().checked) { //check switch state
+            visible = true;
+        } else {
+            visible = false;
+        }
+        browser.map.redraw();
+    }
+}
+
+function onMapLoaded() {
+    //add render slots
+    //render slots are called during map render
+    map = browser.map;    
+    map.addRenderSlot('custom-models', onDrawModels, true);
+    map.moveRenderSlotAfter('after-map-render', 'custom-models');
+
+    //load models
+    //ModelOBJ is the separate modelObj.js library
+    carModel = new ModelOBJ(map, renderer, { path:'https://raw.githubusercontent.com/Melown/vts-browser-js/master/demos/meshes-obj-import/models/car-alpine/alpine.obj' });    
+    houseModel = new ModelOBJ(map, renderer, { path:'model/most/89b6f43b-5316-4dec-b054-fa71cbb5b2da.obj' });    
+}
+
+// var script = document.createElement('script');
+// script.src = "code.js";
+
+function onDrawModels(renderChannel) {
+    if (renderChannel != 'base') {
+        return; //draw only in base channel
+    }
+
+    //draw models when all model resources are ready
+    if (houseModel && houseModel.ready) { 
+        houseModel.draw({
+            // 50.2017103N, 14.8604653E
+            navCoords: [14.8604653, 50.2017103, 222.1],
+            heightMode: 'fix',
+            rotation: [0,0,0],
+            scale: [1, 1, 1],
+            ambientLight: [90,90,90]
+
+            //other possible value are:
+            //depthOffset: [-50,0,0]   //when you need some zbuffer tolerance
+                                       // you will probably only need to change first
+                                       // value in the array
+            //depthOnly: true          //for hit test implementation
+            //onLoaded: (fuction(){})  //callback when model is loded
+        });
+    }    
+
+    if (visible && carModel && carModel.ready) { 
+        carModel.draw({
+            navCoords: [14.8602700, 50.1853, -0.5],
+            heightMode: 'float',
+            rotation: [0,0,0],
+            scale: [1, 1, 1],
+            ambientLight: [90,90,90]
+        });
+    }    
+} 
+        
+</script>
+
+</body>
+</html> 
