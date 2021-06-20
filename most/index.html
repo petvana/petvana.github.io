@@ -75,8 +75,7 @@ var visible = false;
     //you can style html elements as usual
     var panel = browser.ui.addControl('switch-panel',
         '<div class="switch-panel-div">' +
-           '<input id="switch" type="checkbox" checked="true"> Obchvat' +
-           '<p><input id="switch2" type="checkbox"> Obchvat2' +
+           '<input id="switch" type="checkbox" checked="false"> Updated' +
            '</div>');
     
     //get switch element
@@ -117,7 +116,10 @@ function onMapLoaded() {
     //load models
     //ModelOBJ is the separate modelObj.js library
     carModel = new ModelOBJ(map, renderer, { path:'https://raw.githubusercontent.com/Melown/vts-browser-js/master/demos/meshes-obj-import/models/car-alpine/alpine.obj' });    
-    houseModel = new ModelOBJ(map, renderer, { path:'model/most11.obj/9b7cfdd7-2a03-4d3a-a1bf-06e8ff0cef6e.obj' });    
+    model_stratov = new ModelOBJ(map, renderer, { path:'model/most-v15-stratov2/97533f62-8df2-4f52-8a57-4b7cd5564950.obj' });   
+    model_protihlukovka = new ModelOBJ(map, renderer, { path:'model/most-v15-protihlukovka2/0d0548fa-984b-4fe2-860c-1459b1e16f09.obj' });  
+    model_A = new ModelOBJ(map, renderer, { path:'model/most-v15-variantaA2/03f6a105-f3fa-4e35-9545-d1efd8582c25.obj' });  
+    model_B = new ModelOBJ(map, renderer, { path:'model/most-v15-variantaB2/ce4e21d8-9fba-4ffe-a8d6-3ab014d769f1.obj' });  
 }
 
 // var script = document.createElement('script');
