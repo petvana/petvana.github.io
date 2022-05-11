@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.switch-panel-div {
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    position: absolute;
+    right: 30px;
+    bottom: 30px;
+    background-color: #eee;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: solid 1px #000;            
+}
+</style>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DDBVVK5VC3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-DDBVVK5VC3');
+</script>
+
+</head>
+<body>
+
+<link rel="stylesheet"
+      href="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.css" />
+
+<script type="text/javascript"
+        src="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.js"></script>
+
+<script type="text/javascript" src="https://rawgithub.com/Melown/vts-browser-js/master/demos/meshes-obj-import/modelObj.js"></script>
+
+<div id="map-div" style="width:100%; height:100%;">
+</div>
+
+<script>
+var browser = null;
+var map = null;
+var renderer = null;
+var houseModel = null;
+var carModel = null;
+
+var visible = false;
+
+(function startDemo() {
+    // create map in the html div with id 'map-div'
+    // parameter 'map' sets path to the map which will be displayed
+    // you can create your own map on melown.com
+    // position parameter is described in documentation 
+    // https://github.com/Melown/vts-browser-js/wiki/VTS-Browser-Map-API#position
+    // view parameter is described in documentation 
+    // https://github.com/Melown/vts-browser-js/wiki/VTS-Browser-Map-API#definition-of-view
+    browser = vts.browser('map-div', {
+        map: "https://cdn.melown.com/mario/store/melown2015/map-config/petvana-gmail-com/Example-Map-Bentky-nad-Jizerou-_-example-_-/mapConfig.json",
+        authorization: "https://cdn.melown.com/mario/auth/fximLmpNVFTFw6yJsf35",
+        //position : [ 'obj', 15.3775623,50.675077, 'float',0.00,-231.22,-25.55,0.00,101.83,45.00 ],
+        position : [ 'obj', 14.8439511, 50.2003628, 'float',0.00,-231.22,-25.55,0.00,101.83,45.00 ],
+        minViewExtent: 1 //allow camera little bit closer
+    });
+
+    //check whether browser is supported
+    if (!browser) {
+        console.log('Your web browser does not support WebGL');
+        return;
+    }
+
+    renderer = browser.renderer;
+
+    //create new UI panel
+    //html contetnt is in the form of string
+    //you can style html elements as usual
+    var panel = browser.ui.addControl('switch-panel',
+        '<div class="switch-panel-div">' +
+           '<input id="switch" type="checkbox" checked="false"> Updated' +
+           '</div>');
+    
+    //get switch element
+    //do not use document.getElementById,
+    //because element ids are changed to unique ids
+    button = panel.getElement('switch');
+    
+    //create event listener
+    //once button state is changed then
+    //onSwitchView function is called
+    button.on('change', onSwitchView);
+
+    //callback once is map config loaded
+    browser.on('map-loaded', onMapLoaded);
+
+    reloadJS();
+})();
+
+function onSwitchView() {
+    if (browser.map) { //check whether map is loaded
+        if (button.getElement().checked) { //check switch state
+            visible = true;
+            reloadJS();
+        } else {
+            visible = false;
+        }
+        browser.map.redraw();
+    }
+}
+
+function onMapLoaded() {
+    //add render slots
+    //render slots are called during map render
+    map = browser.map;    
+    map.addRenderSlot('custom-models', onDrawModels, true);
+    map.moveRenderSlotAfter('after-map-render', 'custom-models');
+
+    //load models
+    //ModelOBJ is the separate modelObj.js library
+    carModel = new ModelOBJ(map, renderer, { path:'https://raw.githubusercontent.com/Melown/vts-browser-js/master/demos/meshes-obj-import/models/car-alpine/alpine.obj' });    
+    model_stratov = new ModelOBJ(map, renderer, { path:'model/most-v15-stratov2/97533f62-8df2-4f52-8a57-4b7cd5564950.obj' });   
+    model_protihlukovka = new ModelOBJ(map, renderer, { path:'model/most-v15-protihlukovka2/0d0548fa-984b-4fe2-860c-1459b1e16f09.obj' });  
+    model_A = new ModelOBJ(map, renderer, { path:'model/Zahrada3.obj/df22bba2-c4cf-44eb-ab6f-504051583e21.obj' });
+    model_B = new ModelOBJ(map, renderer, { path:'model/most16-variantaB.obj/cabe960c-f057-4374-808d-dc546e00ce18.obj' });
+}
+
+// var script = document.createElement('script');
+// script.src = "code.js";
+
+
+
+function reloadJS() {
+     var script = document.createElement("script");
+     script.src = "code.js";
+     script.type = "text/javascript";
+     document.getElementsByTagName("head")[0].appendChild(script);
+}
+
+</script>
+
+</body>
+</html> 
