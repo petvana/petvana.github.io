@@ -20,19 +20,14 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-DDBVVK5VC3');
 </script>
 
 </head>
 <body>
 
-<link rel="stylesheet"
-      href="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.css" />
-
-<script type="text/javascript"
-        src="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.js"></script>
-
+<link rel="stylesheet" href="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.css" />
+<script type="text/javascript" src="https://cdn.melown.com/libs/vtsjs/browser/v2/vts-browser.min.js"></script>
 <script type="text/javascript" src="https://rawgithub.com/Melown/vts-browser-js/master/demos/meshes-obj-import/modelObj.js"></script>
 
 <div id="map-div" style="width:100%; height:100%;">
@@ -41,9 +36,12 @@
 <script>
 var browser = null;
 var map = null;
+var geodata = null;
 var renderer = null;
 var houseModel = null;
 var carModel = null;
+
+var clickCoords = null;
 
 var visible = false;
 
@@ -70,6 +68,9 @@ var visible = false;
     }
 
     renderer = browser.renderer;
+
+    //add mouse down callback
+    browser.ui.getMapElement().on('mousedown', onMouseDown);
 
     //create new UI panel
     //html contetnt is in the form of string
@@ -118,12 +119,115 @@ function onMapLoaded() {
     //ModelOBJ is the separate modelObj.js library
     carModel = new ModelOBJ(map, renderer, { path:'https://raw.githubusercontent.com/Melown/vts-browser-js/master/demos/meshes-obj-import/models/car-alpine/alpine.obj' });    
     model_A = new ModelOBJ(map, renderer, { path:'model/9185c7ed-bf66-4824-aecd-43c233914d68.obj' });
+
+    //create geodata object
+    geodata = map.createGeodata();
+    
+    //add group with id = 'places'
+    //all features we create later will be stured in
+    //this group. Storing fetures in diffrent groups
+    //can be usefull for filtering in the styles
+    geodata.addGroup('places');
+
+    //add point with id = 'some-place'
+    //note that this feature uses 'fix' height which
+    //define heigth with no relation to the terrain
+    geodata.addPoint([14.84430211284241,50.20011528311523,226.6868067458272 + 15], 'fix', { 'name' : '1 Revovy dum'  }, 'id-1');
+    geodata.addPoint([14.844125950375867,50.1998345284386,226.65946197044104 + 15], 'fix', { 'name' : '2 Klematis'  }, 'id-2');
+    geodata.addPoint([14.844459801481053,50.19984913908236,230.5857815090567 + 12], 'fix', { 'name' : '3 Pod Brectanem'  }, 'id-3');
+    geodata.addPoint([14.844943137356617,50.200189121795745,228.00912403222173 + 14], 'fix', { 'name' : '4 Visterie'  }, 'id-4');
+    geodata.addPoint([14.844779377317712,50.19999022279547,229.05587635934353 + 14], 'fix', { 'name' : '5 U Tavolniku'  }, 'id-5');
+    geodata.addPoint([14.845289041690997,50.19998887378238,227.7672699764371 + 14], 'fix', { 'name' : '6 Hortenzie'  }, 'id-6');
+    geodata.addPoint([14.845515159997058,50.20005612658885,240.62961633503437 + 1], 'fix', { 'name' : '7 Salvej'  }, 'id-7');
+    geodata.addPoint([14.845378626785994,50.200296130485846,244.02703232318163 + 1], 'fix', { 'name' : '8 Rozmaryna'  }, 'id-8');
+    geodata.addPoint([14.845043896620568,50.200449128890305,227.9322723224759 + 14], 'fix', { 'name' : '9 Dobromysl'  }, 'id-9');
+    geodata.addPoint([14.844803791083383,50.199661693754486,240.88601239211857 + 1], 'fix', { 'name' : '10 Jasmin'  }, 'id-10');
+    geodata.addPoint([14.84487639749983,50.19940014311185,240.48184471856803 + 1], 'fix', { 'name' : '11 Modrin'  }, 'id-11');
+    geodata.addPoint([14.84540471748785,50.19926844652539,235.93680451996624 + 6], 'fix', { 'name' : '12 Jasany'  }, 'id-12');
+    geodata.addPoint([14.84585767256083,50.19951145080156,226.11997060198337 + 15], 'fix', { 'name' : '13 Sporkuv dum'  }, 'id-13');
+
+
+    //geodata.addPoint([14.84430805094641,50.20043043140079,228.44625325128436 + 14], 'fix', { 'name' : 'Nice place'  }, 'id-1');
+    
+
+    //this function is needed only when 'float' heights are used
+    //in case you use data with 'fix' height only then you can
+    //skip this function and call makeFreeLayer directly
+    geodata.processHeights('heightmap-by-precision', 62, onHeightProcessed);
+}
+
+function onHeightProcessed() {
+    var style = {
+        'constants': {
+            '@icon-marker': ['icons', 6, 8, 18, 18]
+        },
+    
+        'bitmaps': {
+            'icons': 'http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png'
+        },
+
+        "layers" : {
+            "violet-line" : {
+                "filter" : ["==", "#type", "line"],
+                "line": true,
+                "line-width" : 4,
+                "line-color": [255,0,255,255],
+                "zbuffer-offset" : [-5,0,0]
+            },
+
+            "violet-points" : {
+                "filter" : ["==", "#id", "some-points"],
+                "point": true,
+                "point-radius" : "$radius",
+                "point-color": [255,0,255,255],              
+                "zbuffer-offset" : [-5,0,0]
+            },
+
+            "place" : {
+                "filter" : [ "all", ["==", "#type", "point"], ["==", "#group", "places"] ],
+                'icon': true,
+                'icon-source': '@icon-marker',
+                'icon-color': [0,255,0,255],
+                'icon-scale': 1.5,
+                'icon-origin': 'center-center',
+
+                "label": true,
+                "label-size": 17,
+                "label-source": "$name",
+                "label-offset": [0,-20],
+
+                "zbuffer-offset" : [-5,0,0]
+            }
+        }
+    };
+
+    var freeLayer = geodata.makeFreeLayer(style);
+
+    map.addFreeLayer('geodatatest', freeLayer);
+
+    var view = map.getView();
+    view.freeLayers.geodatatest = {};
+    map.setView(view);
+
 }
 
 // var script = document.createElement('script');
 // script.src = "code.js";
 
 
+function onMouseDown(event) {
+    if (event.getMouseButton() == 'left') {
+        var coords = event.getMouseCoords();
+
+        //get hit coords with fixed height
+        clickCoords = map.getHitCoords(coords[0], coords[1], 'fix');
+
+        console.log(JSON.stringify(clickCoords));
+        
+        //force map redraw to display hit point
+        map.redraw();
+    }
+}
 
 function reloadJS() {
      var script = document.createElement("script");

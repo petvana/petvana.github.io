@@ -29,6 +29,22 @@ var drawFce = function () {
             ambientLight: [90,90,90]
         });
     }  
+
+    if (clickCoords) { //draw hit point
+        /*
+        //conver hit coords to canvas coords
+        coords = map.convertCoordsFromNavToCanvas(clickCoords, 'fix');
+
+        renderer.drawImage({
+            rect : [coords[0]-12, coords[1]-12, 24, 24],
+            texture : pointTexture,
+            color : [255,0,0,255],  //white point is multiplied by red color so resulting point will be red
+            depth : coords[2],
+            depthTest : false,
+            blend : true   //point texture has alpha channel so blend is needed
+            });
+            */
+    }
 };
 
 function onDrawModels(renderChannel) {
